@@ -116,3 +116,7 @@ Cursor ==> |
 - Fix tabbing with mulitple delims/paras
 - Fix vim issue with searchpairpos()
 - Added surroundings for things other than just `<cr>`
+- Consider more `IDE` like features such as for some filetypes (java comes to mind)  
+  "|"  
+  `<cr>`  
+  +"|"
