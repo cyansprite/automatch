@@ -103,7 +103,7 @@ Cursor ==> |
 
 | Flag                        | Default                                                                         | Description                                                                                |
 | -------------------         | ---------------------------------                                               | ------------------------------------------------------                                     |
-| `g:automatch_matchings`     |  { "'" : "'", '"' : '"', "(" : ")", "[" : "]", "{" : "}"}                       | What to auto match.                                                                        |
+| `g:automatch_matchings`     |  `{ "'" : "'"`<br>`, \'"' : '"'`<br>`, \"(" : ")"`<br>`, \"[" : "]"`<br>`, \"{" : "}"}`                       | What to auto match.                                                                        |
 | `g:automatch_delimeters`    | [ ',' ]                                                                         | Delimeters use to tab with                                                                 |
 | `g:autoMatch_useDefaults`   | 1                                                                               | Use the default mappings currently anything other than 1 is unsupported                    |
 
