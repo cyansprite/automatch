@@ -78,14 +78,19 @@ endfunc
 " }}}1
 func! s:main(char) "{{{1
     " Initialize
+    if s:amICommentOrString(0) || s:vimComments(a:char) || s:amIApostrophe(a:char)
+        return a:char
+    endif
+
     let l:col = col('.')
 
     let l:uline = getline('.')
     let l:last = strpart(l:uline, l:col - 1, len(l:uline) - l:col + 1)
     let l:first =  strpart(l:uline, 0, l:col - 1)
 
+
     " if comment/string, then return (if user didn't override)
-    call setline('.', l:first . a:char . l:last)
+    call setline('.', ' ' . l:first . a:char . l:last . ' ')
 
     if s:amICommentOrString(0) || s:vimComments(a:char) || s:amIApostrophe(a:char)
         undo
@@ -98,11 +103,11 @@ func! s:main(char) "{{{1
     if a:char == '['
         let l:prefix = '\'
     endif
-
+    let spb2  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzbcn', s:skip)
     undo
-    let sp1 = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzcn' , s:skip)
-    let sp2 = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzbcn', s:skip)
-    if l:sp1 != [0,0] && l:sp2 == [0,0]
+    let sp1  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzcn' , s:skip)
+    let sp2  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzbcn', s:skip)
+    if l:sp1 != [0,0] && l:sp2 == [0,0] && l:spb2 == [0,0]
         return a:char
     endif
 
@@ -120,7 +125,6 @@ func! s:dobackspace() "{{{1
     " ()|       : para in front.
     " (|)       : para inside.
     " (| )      : para space in front (rare case).
-    " ( | )     : para just expanded.
     " (   )|    : para just expanded, and in front of.
     " (|  )     : para just expanded, and in front of left.
     " -------------------------------------------------------------------------
@@ -132,6 +136,9 @@ func! s:dobackspace() "{{{1
     " (  | )    : Some weird amount of space, this seems edge case and maybe
     "             the user wanted the weird spacing such as in strings
     " Any other case I haven't analyzed or have come across.
+    " -------------------------------------------------------------------------
+    " NOTE: Special Case
+    " ( | )     : para just expanded, unexpand it
     " -------------------------------------------------------------------------
 
     " ignore comments and strings given that's the users desire
@@ -146,23 +153,30 @@ func! s:dobackspace() "{{{1
     let line = getline('.')
     let moveleft = 0
     let redo = 1
+    let question = l:line[l:col - 2]
 
     " loop through each key, if it's one of the positions above, save things.
     for key in keys(g:automatch_matchings)
         for val in possible
             if (l:line[l:col - val[0]] == key &&
             \   l:line[l:col - val[1]] == g:automatch_matchings[key])
-                " Now set the line
-                call setline('.',
-                            \ strpart(l:line, 0, l:col - val[0]) .
-                            \ strpart(l:line, l:col - val[1] + 1, len(l:line) - l:col + 1))
+                if val[0] == 3 && val[1] == 0
+                    call setline('.',
+                                \ strpart(l:line, 0, l:col - val[0] + 1) .
+                                \ strpart(l:line, l:col, len(l:line) - l:col))
+                else
+                    " Now set the line
+                    call setline('.',
+                                \ strpart(l:line, 0, l:col - val[0]) .
+                                \ strpart(l:line, l:col - val[1] + 1, len(l:line) - l:col + 1))
 
-                if val[1] == 2
-                    let moveleft = val[0] - val[1]
-                elseif val[1] == 0
-                    let moveleft = 1
+                    if val[1] == 2
+                        let moveleft = val[0] - val[1]
+                    elseif val[1] == 0
+                        let moveleft = 1
+                    endif
+                    let l:redo = 0
                 endif
-                let l:redo = 0
 
                 break
             endif
