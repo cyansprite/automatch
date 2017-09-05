@@ -43,14 +43,14 @@ Cursor ==> |
 ()|<br>
 
 #### Backspace handling cursor ==> \ (table issues with git)
-| Sequence        |    Description                            |
-| --------------- | ----------------------------------------- |
-|     ()\         | para in front.                            |
-|     (\)         | para inside.                              |
-|     (\ )        | para space in front (rare case).          |
-|     ( \ )       | para just expanded.                       |
-|     (   )\      | para just expanded, and in front of.      |
-|     (\  )       | para just expanded, and in front of left. |
+| Sequence        |    Description                            |Result |
+| --------------- | ----------------------------------------- |-------|
+|     ()\|         | para in front.                            |Deleted|
+|     (\|)         | para inside.                              |Deleted|
+|     (\| )        | para space in front (rare case).          |Deleted|
+|     ( \| )       | para just expanded.                       |(\|)   |
+|     (   )\|      | para just expanded, and in front of.      |Deleted|
+|     (\|  )       | para just expanded, and in front of left. |Deleted|
 
 ##### NOTE: Cases that might seem valid but aren't
 - `(  |) `    : This might be user desire to get rid of spacing by hitting
