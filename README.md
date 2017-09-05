@@ -12,7 +12,8 @@
 Cursor ==> |
 
 #### Typing a starting para char
-|
+|<br>
+`(`<br>
 (|)
 
 #### Typing space in a para pair
