@@ -1,17 +1,17 @@
 # automatch
-
+https://cyansprite.github.io/automatch/  
 <i>Some things just match</i>
 
-### Things to know
+## Things to know
 
 - It *'breaks'* undo, this is intentional, why?  
   I would rather have to do extra undos than to retype something.
 - Currently vim doesn't like searchpairpos() flags, only tested on 7.4 will need to handle that more gracefully...
 - With visual mode V (line-wise) it will insert the surroundings on the first indent level rather than the first        position.
 
-### Usage 
+# Usage 
 
-#### Normal Mode
+## Normal Mode
 Use `<leader>s` to start a surround command, type in a motion, now it will ask what you want to surround, type a match you have in g:automatch_matchings and it will insert, otherwise throw an error message explaining it's not a key in your dictionary.
 
 ##### Example
@@ -20,7 +20,7 @@ Cursor ==> |
 `<leader>se(`    
 (word)| some other words    
 
-#### Visual mode
+## Visual mode
 Same as above... just whatever is highlighted gets surrounded instead of a motion.
 
 ##### Example
@@ -31,7 +31,7 @@ Cursor ==> |
 `<leader>s(`   
 |(word) some other words   
 
-#### Insert Mode
+## Insert Mode
 Cursor ==> |
 
 #### Typing a starting para char
@@ -122,7 +122,7 @@ Cursor ==> |
 `<s-tab>`<br>
 |(some, random, text)<br>
 
-### Global options
+## Global options
 
 | Flag                        | Default Values Listed | Description                                                                                |
 | -------------------         | ---------------------------------                                               | ------------------------------------------------------                                     |
@@ -130,7 +130,7 @@ Cursor ==> |
 | `g:automatch_delimeters`    | [ ',' ]                                                                         | Delimeters use to tab with                                                                 |
 | `g:autoMatch_useDefaults`   | 1                                                                               | Use the default mappings                    |
 
-### I Don't Like your mappings.
+## I Don't Like your mappings.
 No prob, map these :) after setting g:autoMatch_useDefaults to 0, or optionally map over the ones you don't like, keep the ones you do.
 ```vim
 if g:autoMatch_useDefaults
