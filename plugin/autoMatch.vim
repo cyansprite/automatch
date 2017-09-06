@@ -429,6 +429,84 @@ func! s:doeithertab(forward) "{{{2
     return ''
 endfunc "}}}2
 
+func! s:surround(type, ...) "{{{1
+    let sel_save = &selection
+    let &selection = "inclusive"
+    let reg_save = @@
+    let savepos = getcurpos()
+    let pos  = [0,0]
+    let pos2 = [0,0]
+
+    echom "Surround with : "
+    let s:surroundChar = getchar()
+    let s:surroundChar = nr2char(s:surroundChar)
+    let l:passable = 0
+    if !has_key(g:automatch_matchings, s:surroundChar)
+        for key in keys(g:automatch_matchings)
+            if g:automatch_matchings[key] == s:surroundChar
+                let s:surroundChar = key
+                let l:passable = 1
+                break
+            endif
+        endfor
+    else
+        let l:passable = 1
+    endif
+
+    if !l:passable
+        echoe "You don't support this char in g:automatch_matchings : " . s:surroundChar
+        return ''
+    endif
+
+    if a:0  " Invoked from Visual mode, use `< `>
+        silent normal! `<
+        let pos  = [line('.'), col('.')]
+        silent normal! `>
+        let pos2 = [line('.'), col('.')]
+    else " Invoked from Normal mode, use `[ `]
+        silent normal! `[
+        let pos  = [line('.'), col('.')]
+        silent normal! `]
+        let pos2 = [line('.'), col('.')]
+    endif
+    let l:line  = getline(l:pos[0])
+
+    if l:pos[0] == l:pos2[0]
+        if a:type == "V"
+            if l:pos[1] < indent(l:pos[0])
+                let l:pos[1] = indent(l:pos[0]) + 1
+            endif
+        endif
+
+        call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar
+       \  .  strpart(l:line, l:pos[1] - 1, l:pos2[1] - l:pos[1] + 1) . g:automatch_matchings[s:surroundChar]
+       \  .  strpart(l:line, l:pos2[1], len(l:line))
+       \)
+    else
+        if a:type == "V"
+            if l:pos[1] < indent(l:pos[0])
+                let l:pos[1] = indent(l:pos[0]) + 1
+            endif
+            if l:pos2[1] < indent(l:pos2[0])
+                let l:pos2[1] = indent(l:pos2[0]) + 1
+            endif
+        endif
+
+        let l:line2 = getline(l:pos2[0])
+
+        call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar .
+                    \strpart(l:line, l:pos[1] - 1, len(l:line) - l:pos[1] + 1))
+
+        call setline(l:pos2[0], strpart(l:line2, 0, l:pos2[1]) . g:automatch_matchings[s:surroundChar] .
+                    \strpart(l:line2, l:pos2[1], len(l:line2) - l:pos2[1]))
+    endif
+
+
+
+    let &selection = sel_save
+    let @@ = reg_save
+endfunction
+
 
 " TODO make these variables? I don't know man... }}}1
 
@@ -446,12 +524,21 @@ for key in keys(g:automatch_matchings)
     endif
 endfor
 
+inoremap <Plug>(automatch-space) <space><c-r>=<SID>dospacematch()<cr>
+inoremap <Plug>(automatch-back) <c-g>u<bs><c-r>=<SID>dobackspace()<cr>
+inoremap <Plug>(automatch-carriage) <c-g>u<cr><c-r>=<SID>docarriagematch()<cr>
+inoremap <Plug>(automatch-tab) <c-g>u<tab><c-r>=<SID>dotab()<cr>
+inoremap <Plug>(automatch-stab) <c-g>u<s-tab><c-r>=<SID>dostab()<cr>
+nnoremap <Plug>(automatch-surround-normal) :set opfunc=<SID>surround<cr>g@
+vnoremap <Plug>(automatch-surround-visual) :<c-u>call <SID>surround(visualmode(), 1)<cr>
+
 if g:autoMatch_useDefaults
-    inoremap <space> <space><c-r>=<SID>dospacematch()<cr>
-    inoremap <bs> <c-g>u<bs><c-r>=<SID>dobackspace()<cr>
-    inoremap <cr> <c-g>u<cr><c-r>=<SID>docarriagematch()<cr>
-    " TODO map something other than tab/s-tab
-    inoremap <tab> <c-g>u<tab><c-r>=<SID>dotab()<cr>
-    inoremap <s-tab> <c-g>u<tab><c-r>=<SID>dostab()<cr>
+    imap <silent> <space> <Plug>(automatch-space)
+    imap <silent> <bs> <Plug>(automatch-back)
+    imap <silent> <cr> <Plug>(automatch-carriage)
+    imap <silent> <tab> <Plug>(automatch-tab)
+    imap <silent> <s-tab> <Plug>(automatch-stab)
+    nmap <silent> <leader>s <Plug>(automatch-surround-normal)
+    vmap <silent> <leader>s <Plug>(automatch-surround-visual)
 endif
 " }}}
