@@ -4,11 +4,34 @@
 
 ### Things to know
 
-- It <i>breaks</i> undo, this is intentional, why?
+- It *'breaks'* undo, this is intentional, why?  
   I would rather have to do extra undos than to retype something.
 - Currently vim doesn't like searchpairpos() flags, only tested on 7.4 will need to handle that more gracefully...
+- With visual mode V (line-wise) it will insert the surroundings on the first indent level rather than the first        position.
 
 ### Usage 
+
+#### Normal Mode
+Use `<leader>s` to start a surround command, type in a motion, now it will ask what you want to surround, type a match you have in g:automatch_matchings and it will insert, otherwise throw an error message explaining it's not a key in your dictionary.
+
+##### Example
+Cursor ==> |     
+|word some other words     
+`<leader>se(`    
+(word)| some other words    
+
+#### Visual mode
+Same as above... just whatever is highlighted gets surrounded instead of a motion.
+
+##### Example
+Cursor ==> |   
+|word some other words   
+`ve`  
+***word***| some other words   
+`<leader>s(`   
+|(word) some other words   
+
+#### Insert Mode
 Cursor ==> |
 
 #### Typing a starting para char
@@ -105,9 +128,21 @@ Cursor ==> |
 | -------------------         | ---------------------------------                                               | ------------------------------------------------------                                     |
 | `g:automatch_matchings`     |  `{ "'" : "'",`<br> `\'"' : '"'`,<br> `\"(" : ")",` <br>`\"[" : "]"`, <br>`\"{" : "}"}`                       | What to auto match.                                                                        |
 | `g:automatch_delimeters`    | [ ',' ]                                                                         | Delimeters use to tab with                                                                 |
-| `g:autoMatch_useDefaults`   | 1                                                                               | Use the default mappings currently anything other than 1 is unsupported                    |
+| `g:autoMatch_useDefaults`   | 1                                                                               | Use the default mappings                    |
 
-### I Don't Like your mappings... Not supported yet :(
+### I Don't Like your mappings.
+No prob, map these :) after setting g:autoMatch_useDefaults to 0, or optionally map over the ones you don't like, keep the ones you do.
+```vim
+if g:autoMatch_useDefaults
+    imap <silent> <space> <Plug>(automatch-space)
+    imap <silent> <bs> <Plug>(automatch-back)
+    imap <silent> <cr> <Plug>(automatch-carriage)
+    imap <silent> <tab> <Plug>(automatch-tab)
+    imap <silent> <s-tab> <Plug>(automatch-stab)
+    nmap <silent> <leader>s <Plug>(automatch-surround-normal)
+    vmap <silent> <leader>s <Plug>(automatch-surround-visual)
+endif
+```
 
 ##### Todo
 
