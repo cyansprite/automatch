@@ -1,0 +1,241 @@
+automatch.txt
+
+================================================================================
+CONTENTS                                                      *automatch-contents*
+
+1. automatch.................................................|automatch-automatch|
+    1.1. Things to know.................................|automatch-things_to_know|
+2. Usage.........................................................|automatch-usage|
+    2.1. Normal Mode.......................................|automatch-normal_mode|
+                2.1.1. Example.................................|automatch-example|
+    2.2. Visual mode.......................................|automatch-visual_mode|
+                2.2.1. Example.................................|automatch-example|
+    2.3. Insert Mode.......................................|automatch-insert_mode|
+            2.3.1. Typing a starting para char.|automatch-typing_a_starting_para_char|
+            2.3.2. Typing space in a para pair.|automatch-typing_space_in_a_para_pair|
+            2.3.3. Typing carriage return in para pair.|automatch-typing_carriage_return_in_para_pair|
+                2.3.3.1. Note, that the spaces made are based on expandtab and shiftwidth, and ( | ), (|) treated the same..|automatch-note,_that_the_spaces_made_are_based_on_expandtab_and_shiftwidth,_and_(_|_),_(|)_treated_the_same.|
+                2.3.3.2. Case 1.................................|automatch-case_1|
+                2.3.3.3. Case 2.................................|automatch-case_2|
+            2.3.4. Typing a ending para char.|automatch-typing_a_ending_para_char|
+            2.3.5. Backspace handling cursor ==> \ (table issues with git).|automatch-backspace_handling_cursor_==>_\_(table_issues_with_git)|
+                2.3.5.1. NOTE: Cases that might seem valid but aren't.|automatch-note:_cases_that_might_seem_valid_but_aren't|
+            2.3.6. Tab handling...........................|automatch-tab_handling|
+                2.3.6.1. Note: Space here doesn't really matter..|automatch-note:_space_here_doesn't_really_matter.|
+                2.3.6.2. Case 1.................................|automatch-case_1|
+                2.3.6.3. Case 2.................................|automatch-case_2|
+                2.3.6.4. Case 3.................................|automatch-case_3|
+                2.3.6.5. Case 4.................................|automatch-case_4|
+                2.3.6.6. Case 5.................................|automatch-case_5|
+                2.3.6.7. case 6.................................|automatch-case_6|
+            2.3.7. Python Block Comments.........|automatch-python_block_comments|
+    2.4. Global options.................................|automatch-global_options|
+    2.5. I Don't Like your mappings........|automatch-i_don't_like_your_mappings.|
+                2.5.1. Todo.......................................|automatch-todo|
+
+================================================================================
+AUTOMATCH                                                    *automatch-automatch*
+
+https://cyansprite.github.io/automatch/
+Some things just match
+
+--------------------------------------------------------------------------------
+THINGS TO KNOW                                          *automatch-things_to_know*
+
+*   It 'breaks' undo, this is intentional, why?
+    I would rather have to do extra undos than to retype something.
+*   Currently vim doesn't like searchpairpos() flags, only tested on 7.4 will need to handle that more gracefully...
+*   With visual mode V (line-wise) it will insert the surroundings on the first indent level rather than the first        column.
+
+================================================================================
+USAGE                                                            *automatch-usage*
+
+--------------------------------------------------------------------------------
+NORMAL MODE                                                *automatch-normal_mode*
+
+Use `<leader>s` to start a surround command, type in a motion, now it will ask what you want to surround, type a match you have in g:automatch_matchings and it will insert, otherwise throw an error message explaining it's not a key in your dictionary.
+
+EXAMPLE                                                        *automatch-example*
+
+Cursor ==> |
+|word some other words
+`<leader>se(`
+(word)| some other words
+
+--------------------------------------------------------------------------------
+VISUAL MODE                                                *automatch-visual_mode*
+
+Same as above... just whatever is highlighted gets surrounded instead of a motion.
+
+EXAMPLE                                                        *automatch-example*
+
+Cursor ==> |
+|word some other words
+`ve`
+word| some other words
+`<leader>s(`
+(word)| some other words
+
+--------------------------------------------------------------------------------
+INSERT MODE                                                *automatch-insert_mode*
+
+Cursor ==> |
+
+TYPING A STARTING PARA CHAR                *automatch-typing_a_starting_para_char*
+
+|
+`(`
+(|)
+
+TYPING SPACE IN A PARA PAIR                *automatch-typing_space_in_a_para_pair*
+
+(|)
+`<space>`
+( | )
+
+TYPING CARRIAGE RETURN IN PARA PAIR *automatch-typing_carriage_return_in_para_pair*
+
+NOTE, THAT THE SPACES MADE ARE BASED ON EXPANDTAB AND SHIFTWIDTH, AND ( | ), (|) TREATED THE SAME. *automatch-note,_that_the_spaces_made_are_based_on_expandtab_and_shiftwidth,_and_(_|_),_(|)_treated_the_same.*
+
+CASE 1                                                          *automatch-case_1*
+
+(|)
+`<cr>`
+(
+
+)
+
+CASE 2                                                          *automatch-case_2*
+
+(|) stuff
+ `<cr>`
+ (
+   stuff
+ )
+
+TYPING A ENDING PARA CHAR                    *automatch-typing_a_ending_para_char*
+
+(|)
+`)`
+()|
+
+BACKSPACE HANDLING CURSOR ==> \ (TABLE ISSUES WITH GIT) *automatch-backspace_handling_cursor_==>_\_(table_issues_with_git)*
+
+| Sequence         |    Description                            |Result |
+| ---------------  | ----------------------------------------- |-------|
+|     ()|         | para in front.                            |Deleted|
+|     (|)         | para inside.                              |Deleted|
+|     (| )        | para space in front (rare case).          |Deleted|
+|     ( | )       | para just expanded.                       |(|)   |
+|     (   )|      | para just expanded, and in front of.      |Deleted|
+|     (|  )       | para just expanded, and in front of left. |Deleted|
+
+NOTE: CASES THAT MIGHT SEEM VALID BUT AREN'T *automatch-note:_cases_that_might_seem_valid_but_aren't*
+
+*       : This might be user desire to get rid of spacing by hitting
+                 right, then
+*       : This might be user desire to get rid of spacing by hitting
+                 delete then
+*       : Some weird amount of space, this seems edge case and maybe
+                 the user wanted the weird spacing such as in strings
+
+TAB HANDLING                                              *automatch-tab_handling*
+
+NOTE: SPACE HERE DOESN'T REALLY MATTER. *automatch-note:_space_here_doesn't_really_matter.*
+
+CASE 1                                                          *automatch-case_1*
+
+(|)
+`<tab>`
+()|
+
+CASE 2                                                          *automatch-case_2*
+
+(|)
+`<s-tab>`
+|()
+
+CASE 3                                                          *automatch-case_3*
+
+|()
+`<tab>`
+(|)
+
+CASE 4                                                          *automatch-case_4*
+
+()|
+`<s-tab>`
+(|)
+
+CASE 5                                                          *automatch-case_5*
+
+|(some, random, text)
+`<tab>`
+(some|, random, text)
+`<tab>`
+(some, random|, text)
+`<tab>`
+(some, random, text|)
+`<tab>`
+(some, random, text)|
+
+CASE 6                                                          *automatch-case_6*
+
+(some, random, text)|
+`<s-tab>`
+(some, random, text|)
+`<s-tab>`
+(some, random|, text)
+`<s-tab>`
+(some|, random, text)
+`<s-tab>`
+|(some, random, text)
+
+PYTHON BLOCK COMMENTS                            *automatch-python_block_comments*
+
+|Case |Description       |Result|
+|-----|------------------|------|
+||"" |para behind       |"""| |
+|"|" |para inside       |"""| |
+|""| |para front        |"""| |
+||"""|para behind       |"""| |
+|"|""|para inside behind|"""| |
+|""|"|para inside front |"""| |
+|"""||para front        |"""| |
+
+--------------------------------------------------------------------------------
+GLOBAL OPTIONS                                          *automatch-global_options*
+
+| Flag                        | Default Values Listed | Description                                                                                |
+| -------------------         | ---------------------------------                                               | ------------------------------------------------------                                     |
+| `g:automatch_matchings`     |   ,  ,                        | What to auto match.                                                                        |
+| `g:automatch_delimeters`    | [ ',' ]                                                                         | Delimeters use to tab with                                                                 |
+| `g:autoMatch_useDefaults`   | 1                                                                               | Use the default mappings                    |
+
+--------------------------------------------------------------------------------
+I DON'T LIKE YOUR MAPPINGS.                *automatch-i_don't_like_your_mappings.*
+
+No prob, map these :) after setting g:autoMatch_useDefaults to 0, or optionally map over the ones you don't like, keep the ones you do.
+>
+    if g:autoMatch_useDefaults
+        imap <silent> <space> <Plug>(automatch-space)
+        imap <silent> <bs> <Plug>(automatch-back)
+        imap <silent> <cr> <Plug>(automatch-carriage)
+        imap <silent> <tab> <Plug>(automatch-tab)
+        imap <silent> <s-tab> <Plug>(automatch-stab)
+        nmap <silent> <leader>s <Plug>(automatch-surround-normal)
+        vmap <silent> <leader>s <Plug>(automatch-surround-visual)
+    endif
+<
+
+TODO                                                              *automatch-todo*
+
+*   Add some gifs.
+*   Add vim.help
+*   Fix tabbing with mulitple delims/paras
+*   Fix vim issue with searchpairpos()
+*   Added surroundings for things other than just `<cr>`
+*   Consider more `IDE` like features such as for some filetypes (java comes to mind)
+    "|"
+    `<cr>`
+    +"|"
