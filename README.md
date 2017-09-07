@@ -7,7 +7,7 @@ https://cyansprite.github.io/automatch/
 - It *'breaks'* undo, this is intentional, why?  
   I would rather have to do extra undos than to retype something.
 - Currently vim doesn't like searchpairpos() flags, only tested on 7.4 will need to handle that more gracefully...
-- With visual mode V (line-wise) it will insert the surroundings on the first indent level rather than the first        position.
+- With visual mode V (line-wise) it will insert the surroundings on the first indent level rather than the first        column.
 
 # Usage 
 
@@ -29,7 +29,7 @@ Cursor ==> |
 `ve`  
 ***word***| some other words   
 `<leader>s(`   
-|(word) some other words   
+(word)| some other words   
 
 ## Insert Mode
 Cursor ==> |
@@ -66,8 +66,8 @@ Cursor ==> |
 ()|<br>
 
 #### Backspace handling cursor ==> \ (table issues with git)
-| Sequence        |    Description                            |Result |
-| --------------- | ----------------------------------------- |-------|
+| Sequence         |    Description                            |Result |
+| ---------------  | ----------------------------------------- |-------|
 |     ()\|         | para in front.                            |Deleted|
 |     (\|)         | para inside.                              |Deleted|
 |     (\| )        | para space in front (rare case).          |Deleted|
@@ -121,6 +121,18 @@ Cursor ==> |
 (some|, random, text)<br>
 `<s-tab>`<br>
 |(some, random, text)<br>
+
+#### Python Block Comments
+
+|Case |Description       |Result|
+|-----|------------------|------|
+|\|"" |para behind       |"""\| |
+|"\|" |para inside       |"""\| |
+|""\| |para front        |"""\| |
+|\|"""|para behind       |"""\| |
+|"\|""|para inside behind|"""\| |
+|""\|"|para inside front |"""\| |
+|"""\||para front        |"""\| |
 
 ## Global options
 
