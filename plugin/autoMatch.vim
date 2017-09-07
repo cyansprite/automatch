@@ -31,17 +31,17 @@ if !has_key(g:, "autoMatch_useDefaults")
     let g:autoMatch_useDefaults = 1
 endif
 "}}}1
-" #region    helpers
-func! s:amICommentOrString(ignoreString) "{{{1
+" Region: helpers
+func! s:amICommentOrString(ignoreString, lnnr, col) "{{{1
     " ignore comments and strings given that's the users desire
-    let higroup = synIDattr(synIDtrans(synID(line("."),col('.') - 1,1)),"name")
+    let higroup = synIDattr(synIDtrans(synID(a:lnnr,a:col - 1,1)),"name")
 
-    return  (higroup ==# "Comment" && g:automatch_matchInComment == 0)
-                \ || (a:ignoreString == 0 && (higroup ==# "String" && g:automatch_matchInString == 0))
+    return  (higroup ==# "Comment")
+                \ || (a:ignoreString == 0 && (higroup ==# "String"))
 endfun "}}}1
 func! s:vimComments(char) "{{{1
     " Vim comments are " therefore we need to ignore them
-    return &filetype == 'vim' && a:char ==# '"' && col('.') == len(getline('.'))
+    return &filetype == 'vim' && a:char == '"' && col('.') - 1 == len(getline('.'))
 endfun "}}}
 func! s:amIApostrophe(char) "{{{1
     " If we are right in front of a-zA-Z then we should not complete, because
@@ -50,14 +50,83 @@ func! s:amIApostrophe(char) "{{{1
     return a:char == "'" && ((l:asc >= char2nr('a') && l:asc <= char2nr('z')) ||
                 \ (l:asc >= char2nr('A') && l:asc <= char2nr('Z')))
 endfunc "}}}1
-" #endregion helpers
+func! s:amIBlockCommentForPython(char) " {{{1
+    " -------------------------------------------------------------------------
+    " NOTE: cases to be valid  | Result |
+    " |""       : para behind. |   """|  |so disable for them, insert "
+    " "|"       : para inside. |   """|  |so disable for them, insert "
+    " ""|       : para front . |   """|  |so disable for them, insert "
+    " -------------------------------------------------------------------------
+    " NOTE: cases to be invalid  | Result  |
+    " |"""       : para behind.   |   """|  |so disable for them, insert "
+    " "|""       : para inside.   |   """|  |so disable for them, insert "
+    " ""|"       : para inside.   |   """|  |so disable for them, insert "
+    " """|       : para front .   |   """|  |so disable for them, insert "
+    " -------------------------------------------------------------------------
+    let ln = getline('.')
+    let front  = a:char == l:ln[col('.') - 3] && a:char == l:ln[col('.') - 2]
+    let fab    = a:char != l:ln[col('.') - 4] && a:char != l:ln[col('.') - 1]
+    let inside = a:char == l:ln[col('.') - 2] && a:char == l:ln[col('.') - 1]
+    let lab    = a:char != l:ln[col('.') - 3] && a:char != l:ln[col('.') - 0]
+    let behind = a:char == l:ln[col('.') - 0] && a:char == l:ln[col('.') - 1]
+    let bab    = a:char != l:ln[col('.') + 1] && a:char != l:ln[col('.') - 2]
 
-" #region    functions
-func! s:invmain(char) "{{{1
+    if l:front && l:fab " ""|
+        return 0
+    elseif l:inside && l:lab " "|"
+        return 1
+    elseif l:behind && l:bab " ""|
+        return 2
+    elseif (l:behind && l:inside) " "|""
+        return -2
+    elseif (l:front && l:inside) " ""|"
+        return -1
+    elseif (l:behind) " |"""
+        return -3
+    elseif (l:front) " """|
+        return -4
+    endif
+
+    " Doesn't have to do with a block comment
+    return -5
+
+endfunc " 1}}}
+" EndRegion: helpers
+
+" Region: functions
+func! s:beforemain(char) "{{{1
     " -------------------------------------------------------------------------
     " NOTE: cases to be valid  | Result |
     " (|)       : para inside. |   ()|  |
     " -------------------------------------------------------------------------
+    " NOTE: python can use block comments
+    " refer to s:amIBlockCommentForPython(char)
+    " -------------------------------------------------------------------------
+    if &filetype == 'python' && a:char == '"'
+        let py = s:amIBlockCommentForPython(a:char)
+        echom l:py
+        if l:py > 0
+            let pos = getcurpos()
+            let pos[2] = pos[2] + l:py
+            let pos[4] = pos[4] + l:py
+            call setpos('.', pos)
+            return a:char
+        elseif l:py > -5
+            let pos = getcurpos()
+            if l:py > -4
+                let l:py = -l:py
+                let pos[2] = pos[2] + l:py
+                let pos[4] = pos[4] + l:py
+                call setpos('.', pos)
+            endif
+            return ''
+        endif
+    endif
+
+    if s:amICommentOrString(0, line('.'),col('.')) || s:vimComments(a:char) || s:amIApostrophe(a:char)
+        return a:char
+    endif
+
     if a:char == getline('.')[col('.') - 1]
         let pos = getcurpos()
         let pos[2] = pos[2] + 1
@@ -68,9 +137,7 @@ func! s:invmain(char) "{{{1
 
     " If it's existant, the same thing and it's not an immediate match, go to main...
     if has_key(g:automatch_matchings, a:char)
-        if a:char == g:automatch_matchings[a:char]
-            return s:main(a:char)
-        endif
+        return s:main(a:char)
     endif
 
     return a:char
@@ -78,40 +145,22 @@ endfunc
 " }}}1
 func! s:main(char) "{{{1
     " Initialize
-    if s:amICommentOrString(0) || s:vimComments(a:char) || s:amIApostrophe(a:char)
-        return a:char
-    endif
-
     let l:col = col('.')
 
     let l:uline = getline('.')
     let l:last = strpart(l:uline, l:col - 1, len(l:uline) - l:col + 1)
     let l:first =  strpart(l:uline, 0, l:col - 1)
 
-
     " if comment/string, then return (if user didn't override)
     call setline('.', ' ' . l:first . a:char . l:last . ' ')
 
-    if s:amICommentOrString(0) || s:vimComments(a:char) || s:amIApostrophe(a:char)
+    if s:amICommentOrString(0, line('.'),col('.')) || s:vimComments(a:char) || s:amIApostrophe(a:char)
         undo
         return a:char
     endif
 
     " if it has an unpaired ) somewhere in the future, match it with that
-    " don't add a new one. with [] we need a prefix of \ so searching works
-    let prefix = ''
-    if a:char == '['
-        let l:prefix = '\'
-    endif
-    let spb2  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzbcn', s:skip)
-    undo
-    let sp1  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzcn' , s:skip)
-    let sp2  = searchpairpos(l:prefix . a:char, '', l:prefix . g:automatch_matchings[a:char], 'Wzbcn', s:skip)
-    if l:sp1 != [0,0] && l:sp2 == [0,0] && l:spb2 == [0,0]
-        return a:char
-    endif
 
-    " if it has an unpaired ) somewhere in the future, match it with that
     " set the line..
     call setline('.', l:first . a:char . g:automatch_matchings[a:char] . l:last)
     norm! l
@@ -142,7 +191,7 @@ func! s:dobackspace() "{{{1
     " -------------------------------------------------------------------------
 
     " ignore comments and strings given that's the users desire
-    if s:amICommentOrString(1)
+    if s:amICommentOrString(1, line('.'),col('.'))
         return ''
     endif
 
@@ -207,7 +256,7 @@ func! s:dospacematch() "{{{1
     " -------------------------------------------------------------------------
 
     " ignore comments and strings given that's the users desire
-    if s:amICommentOrString(1)
+    if s:amICommentOrString(1, line('.'),col('.'))
         return ''
     endif
 
@@ -236,7 +285,7 @@ func! s:docarriagematch() "{{{1
     " -------------------------------------------------------------------------
 
     " ignore comments and strings given that's the users desire
-    if s:amICommentOrString(1)
+    if s:amICommentOrString(1, line('.'),col('.'))
         return ''
     endif
 
@@ -347,7 +396,7 @@ func! s:doeithertab(forward) "{{{2
     " -------------------------------------------------------------------------
 
     " ignore comments and strings given that's the users desire
-    if s:amICommentOrString(1)
+    if s:amICommentOrString(1, line('.'),col('.'))
         return ''
     endif
 
@@ -510,17 +559,17 @@ endfunction
 
 " TODO make these variables? I don't know man... }}}1
 
-" #endregion functions
+" EndRegion: functions
 
 " {{{ Defaults, mappings, and finish
 
 for key in keys(g:automatch_matchings)
     if key ==# "'"
-        exe 'inoremap ' . key . " " . "<c-r>=<SID>main(".'"'.key.'"'.")<cr>"
-        exe 'inoremap ' . g:automatch_matchings[key] . " " . "<c-r>=<SID>invmain(".'"'. g:automatch_matchings[key] .'"'.")<cr>"
+        exe 'inoremap ' . key . " " . "<c-r>=<SID>beforemain(".'"'.key.'"'.")<cr>"
+        exe 'inoremap ' . g:automatch_matchings[key] . " " . "<c-r>=<SID>beforemain(".'"'. g:automatch_matchings[key] .'"'.")<cr>"
     else
-        exe 'inoremap ' . key . " " . "<c-r>=<SID>main("."'".key."'".")<cr>"
-        exe 'inoremap ' . g:automatch_matchings[key] . " " . "<c-r>=<SID>invmain("."'". g:automatch_matchings[key] ."'".")<cr>"
+        exe 'inoremap ' . key . " " . "<c-r>=<SID>beforemain("."'".key."'".")<cr>"
+        exe 'inoremap ' . g:automatch_matchings[key] . " " . "<c-r>=<SID>beforemain("."'". g:automatch_matchings[key] ."'".")<cr>"
     endif
 endfor
 
