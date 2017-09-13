@@ -480,17 +480,21 @@ func! s:surround(type, ...) "{{{1
     echom "Surround with : "
     let s:surroundChar = getchar()
     let s:surroundChar = nr2char(s:surroundChar)
-    let s:otherChar = ''
+    let s:other = ''
     let l:passable = 0
     if !has_key(g:automatch_matchings, s:surroundChar)
         for key in keys(g:automatch_matchings)
             if g:automatch_matchings[key] == s:surroundChar
+                let s:other = s:surroundChar
                 let s:surroundChar = key
-                let s:other = g:automatch_matchings[s:surroundChar]
                 break
             endif
         endfor
     else
+        let s:other = g:automatch_matchings[s:surroundChar]
+    endif
+
+    if s:other ==# ''
         let s:other = s:surroundChar
     endif
 
@@ -516,7 +520,7 @@ func! s:surround(type, ...) "{{{1
         endif
 
         call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar
-       \  .strpart(l:line, l:pos[1] - 1, l:pos2[1] - l:pos[1] + 1) . s:otherChar
+       \  .strpart(l:line, l:pos[1] - 1, l:pos2[1] - l:pos[1] + 1) . s:other
        \  .strpart(l:line, l:pos2[1], len(l:line))
        \)
     else
@@ -534,7 +538,7 @@ func! s:surround(type, ...) "{{{1
         call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar
                   \ . strpart(l:line, l:pos[1] - 1, len(l:line) - l:pos[1] + 1))
 
-        call setline(l:pos2[0], strpart(l:line2, 0, l:pos2[1]) . s:otherChar .
+        call setline(l:pos2[0], strpart(l:line2, 0, l:pos2[1]) . s:other .
                     \strpart(l:line2, l:pos2[1], len(l:line2) - l:pos2[1]))
     endif
 
