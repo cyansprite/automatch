@@ -17,15 +17,6 @@ if !has_key(g:,"automatch_delimeters")
     let g:automatch_delimeters = [ ',' ]
 endif
 
-" by default ignore strings
-if !has_key(g:, "automatch_matchInString")
-    let g:automatch_matchInString = 0
-endif
-
-if !has_key(g:, "automatch_matchInComment")
-    let g:automatch_matchInComment = 0
-endif
-
 " by default use default ... >.> duh
 if !has_key(g:, "autoMatch_useDefaults")
     let g:autoMatch_useDefaults = 1
@@ -159,7 +150,7 @@ func! s:main(char) "{{{1
         return a:char
     endif
 
-    " if it has an unpaired ) somewhere in the future, match it with that
+    " TODO : if it has an unpaired ) somewhere in the future, match it with that
 
     " set the line..
     call setline('.', l:first . a:char . g:automatch_matchings[a:char] . l:last)
@@ -489,23 +480,20 @@ func! s:surround(type, ...) "{{{1
     echom "Surround with : "
     let s:surroundChar = getchar()
     let s:surroundChar = nr2char(s:surroundChar)
+    let s:otherChar = ''
     let l:passable = 0
     if !has_key(g:automatch_matchings, s:surroundChar)
         for key in keys(g:automatch_matchings)
             if g:automatch_matchings[key] == s:surroundChar
                 let s:surroundChar = key
-                let l:passable = 1
+                let s:other = g:automatch_matchings[s:surroundChar]
                 break
             endif
         endfor
     else
-        let l:passable = 1
+        let s:other = s:surroundChar
     endif
 
-    if !l:passable
-        echoe "You don't support this char in g:automatch_matchings : " . s:surroundChar
-        return ''
-    endif
 
     if a:0  " Invoked from Visual mode, use `< `>
         silent normal! `<
@@ -528,8 +516,8 @@ func! s:surround(type, ...) "{{{1
         endif
 
         call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar
-       \  .  strpart(l:line, l:pos[1] - 1, l:pos2[1] - l:pos[1] + 1) . g:automatch_matchings[s:surroundChar]
-       \  .  strpart(l:line, l:pos2[1], len(l:line))
+       \  .strpart(l:line, l:pos[1] - 1, l:pos2[1] - l:pos[1] + 1) . s:otherChar
+       \  .strpart(l:line, l:pos2[1], len(l:line))
        \)
     else
         if a:type == "V"
@@ -543,10 +531,10 @@ func! s:surround(type, ...) "{{{1
 
         let l:line2 = getline(l:pos2[0])
 
-        call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar .
-                    \strpart(l:line, l:pos[1] - 1, len(l:line) - l:pos[1] + 1))
+        call setline(l:pos[0], strpart(l:line, 0, l:pos[1] - 1) . s:surroundChar
+                  \ . strpart(l:line, l:pos[1] - 1, len(l:line) - l:pos[1] + 1))
 
-        call setline(l:pos2[0], strpart(l:line2, 0, l:pos2[1]) . g:automatch_matchings[s:surroundChar] .
+        call setline(l:pos2[0], strpart(l:line2, 0, l:pos2[1]) . s:otherChar .
                     \strpart(l:line2, l:pos2[1], len(l:line2) - l:pos2[1]))
     endif
 
