@@ -159,10 +159,9 @@ endif
 ##### Todo
 
 - Add some gifs.
-- Add vim.help
-- Fix tabbing with mulitple delims/paras
-- Fix vim issue with searchpairpos()
-- Added surroundings for things other than just `<cr>`
+- Fix tabbing with mulitple delims/paras ( not sure this isn't already fixed )
+- Don't insert if future has non-matched )
+- Add surround in insert mode.
 - Consider more `IDE` like features such as for some filetypes (java comes to mind)  
   "|"  
   `<cr>`  
